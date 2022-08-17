@@ -1,0 +1,304 @@
+import { authenticate } from '@loopback/authentication'
+import { inject, service } from '@loopback/core'
+import { repository } from '@loopback/repository'
+import { getModelSchemaRef, HttpErrors, patch, post, requestBody } from '@loopback/rest'
+import { SecurityBindings, securityId, UserProfile } from '@loopback/security'
+import isEmpty from 'lodash/isEmpty'
+import { CredentialsRequestBody, OAuthTokenRequestBody } from '../../constants/specs/user-controller.specs'
+import { LoginProvider } from '../../enums/authenticate'
+import { PlatformEnum, RoleEnum } from '../../enums/user'
+import { LoginResponse } from '../../interfaces/auth'
+import { PasswordHasherBindings, TokenServiceBindings } from '../../keys'
+import { ForgotPasswordRequest, NewPasswordRequest, ResetPasswordRequest, User, UserWithPassword } from '../../models'
+import { CompanyRepository, UserRepository } from '../../repositories'
+import { Credentials, OAuthToken } from '../../repositories/user.repository'
+import { PasswordHasher } from '../../services/hash.password.bcryptjs'
+import { JWTService } from '../../services/jwt-service'
+import { sendEmail } from '../../services/mail'
+import { SocialLoginService } from '../../services/social-login.service'
+import { MyUserService } from '../../services/user.service'
+import { OPERATION_SECURITY_SPEC } from '../../utils/security-spec'
+
+export class UserController {
+  constructor(
+    @repository(UserRepository)
+    public userRepository: UserRepository,
+    @repository(CompanyRepository)
+    public companyRepository: CompanyRepository,
+    @inject(PasswordHasherBindings.PASSWORD_HASHER)
+    public passwordHasher: PasswordHasher,
+    @inject(TokenServiceBindings.TOKEN_SERVICE)
+    public jwtService: JWTService,
+    @service(MyUserService)
+    public userService: MyUserService,
+    @service(SocialLoginService)
+    public socialLoginService: SocialLoginService
+  ) {}
+
+  @post('/auth/sign-up', {
+    responses: {
+      '200': {
+        description: 'Sign up a new user',
+        content: { 'application/json': { schema: getModelSchemaRef(User) } }
+      }
+    }
+  })
+  async signUp(
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(UserWithPassword, {
+            title: 'NewUser',
+            exclude: ['id', 'platform', 'roles']
+          })
+        }
+      }
+    })
+    newUserRequest: UserWithPassword
+  ): Promise<User> {
+    newUserRequest.platform = PlatformEnum.WEBSITE
+    newUserRequest.roles = [RoleEnum.CUSTOMER]
+
+    return this.userService.createUser(newUserRequest)
+  }
+
+  @post('/auth/login', {
+    responses: {
+      '200': {
+        description: 'Login user',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                token: {
+                  type: 'string'
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+  async login(@requestBody(CredentialsRequestBody) credentials: Credentials): Promise<LoginResponse> {
+    // ensure the user exists, and the password is correct
+    const user = await this.userService.verifyCredentials(credentials)
+
+    // convert a User object into a UserProfile object (reduced set of properties)
+    const userProfile = this.userService.convertToUserProfile(user)
+    // create a JSON Web Token based on the user profile
+    const token = await this.jwtService.generateToken(userProfile)
+    const { roles, platform } = userProfile
+    const { isInactive } = user
+    return { token, roles, platform, isInactive }
+  }
+
+  @post('/auth/login/oauth', {
+    responses: {
+      '200': {
+        description: 'Token',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                token: {
+                  type: 'string'
+                },
+                provider: {
+                  type: 'string'
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+  async oAuthLogin(@requestBody(OAuthTokenRequestBody) oAuthToken: OAuthToken): Promise<LoginResponse> {
+    const { token, provider } = oAuthToken
+    try {
+      let userDetail: User = <User>{}
+
+      switch (provider) {
+        case LoginProvider.FACEBOOK:
+          userDetail = await this.socialLoginService.decodeFacebookAccessToken(token)
+          break
+        case LoginProvider.GOOGLE:
+          userDetail = await this.socialLoginService.decodeGoogleAccessToken(token)
+          break
+        case LoginProvider.ZALO:
+          userDetail = await this.socialLoginService.decodeZaloAccessCode(token)
+          break
+      }
+
+      if (isEmpty(userDetail)) {
+        throw new HttpErrors.UnprocessableEntity('token-is-invalid')
+      }
+
+      // convert a User object into a UserProfile object (reduced set of properties)
+      const userProfile = this.userService.convertToUserProfile(userDetail)
+      // create a JSON Web Token based on the user profile
+      const webLoginToken = await this.jwtService.generateToken(userProfile)
+      const { roles, platform } = userProfile
+      const { isInactive } = userDetail
+      return { token: webLoginToken, roles, platform, isInactive }
+    } catch (error) {
+      // MongoError 11000 duplicate key
+      if (error.code === 11000 && error.errmsg.includes('email')) {
+        throw new HttpErrors.Conflict('email-value-is-already-taken')
+      } else {
+        throw new HttpErrors.UnprocessableEntity('token-is-invalid')
+      }
+    }
+  }
+
+  @post('/auth/forgot-password', {
+    responses: {
+      '200': {
+        // description: '',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                email: {
+                  type: 'string'
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+  async forgotPassword(
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(ForgotPasswordRequest, {
+            title: 'ForgotPassword'
+          })
+        }
+      }
+    })
+    forgotPasswordRequest: ForgotPasswordRequest
+  ): Promise<void> {
+    const invalidEmailError = 'email-address-is-not-registered-please-check-again'
+    const { email = '', platform } = forgotPasswordRequest
+    const foundUser = await this.userRepository.findOne({
+      where: { email, platform }
+    })
+
+    if (!foundUser) {
+      throw new HttpErrors.Unauthorized(invalidEmailError)
+    } else {
+      try {
+        await sendEmail(foundUser, platform, this.userRepository)
+      } catch (error) {
+        throw new HttpErrors.UnprocessableEntity(error.message)
+      }
+    }
+  }
+
+  @post('/auth/reset-password', {
+    responses: {
+      '200': {
+        // description: '',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                email: {
+                  type: 'string'
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+  async resetPassword(
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(ResetPasswordRequest, {
+            title: 'ResetPassword'
+          })
+        }
+      }
+    })
+    resetPasswordRequest: ResetPasswordRequest
+  ): Promise<void> {
+    try {
+      await this.userService.resetPassword(resetPasswordRequest)
+    } catch (error) {
+      throw new HttpErrors.Conflict(error.message)
+    }
+  }
+
+  @patch('/auth/change-password', {
+    security: OPERATION_SECURITY_SPEC,
+    responses: {
+      '200': {
+        description: 'User PATCH password success'
+      }
+    }
+  })
+  @authenticate('jwt')
+  async changePassword(
+    @inject(SecurityBindings.USER)
+    currentUserProfile: UserProfile,
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(NewPasswordRequest, {
+            title: 'NewPassword'
+          })
+        }
+      }
+    })
+    newPasswordRequest: NewPasswordRequest
+  ): Promise<void> {
+    const userId = currentUserProfile[securityId]
+    const { newPassword, oldPassword, isForceChangePassword, userId: forceChangeUserId } = newPasswordRequest
+
+    if (newPassword.length < 8) {
+      throw new HttpErrors.Conflict('your-new-password-must-have-minimum-length-of-8')
+    }
+
+    try {
+      // retrieve user credentials by userId
+      const userRecentCredentials = await this.userRepository.userCredentials(userId).get()
+
+      // compare old password with recent password
+      const oldPasswordIsMatched = await this.passwordHasher.comparePassword(
+        oldPassword,
+        userRecentCredentials.password
+      )
+
+      if (oldPasswordIsMatched) {
+        // encrypt the password
+        const password = await this.passwordHasher.hashPassword(newPassword)
+
+        const isDefaultPassword = false
+        await this.userRepository.updateById(userId, { isDefaultPassword })
+
+        await this.userRepository.userCredentials(userId).patch({ password })
+        return
+      }
+      if (isForceChangePassword && forceChangeUserId) {
+        const password = await this.passwordHasher.hashPassword(newPassword)
+        await this.userRepository.userCredentials(forceChangeUserId).patch({ password })
+        return
+      }
+    } catch (error) {
+      throw new HttpErrors.InternalServerError()
+    }
+
+    throw new HttpErrors.Conflict('your-old-password-is-not-matched')
+  }
+}
