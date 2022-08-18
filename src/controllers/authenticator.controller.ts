@@ -23,24 +23,27 @@ import {
 
 } from '@loopback/rest';
 import {User} from '../models';
-import { Validator2Service } from '../services';
+import { BcryptHasher, validateCredentials, Validator2Service } from '../services';
 // import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 import _ from 'lodash';
 import { UserRepository} from '../repositories';
 // import { createSecureServer } from 'http2';
 
 import { Userwithpassword } from '../models';
+import { PasswordHasherBindings } from '../key';
 
 
 export class AuthenticationUser {
+
   constructor(
     @repository(UserRepository)
     public userRepository: UserRepository,
     @service(Validator2Service)
-    public userService: Validator2Service
-
+    public userService: Validator2Service,
+    @inject(PasswordHasherBindings.PASSWORD_HASHER)
+    public hasher:BcryptHasher
   ) {}
-  @post('/users/sign-up', {
+  @post('/auth/sign-up', {
     responses: {
       '200': {
         description: 'Sign up a new user',
@@ -54,14 +57,18 @@ export class AuthenticationUser {
         'application/json': {
           schema: getModelSchemaRef(Userwithpassword,{
             title: 'NewUser',
-            exclude: ['id', 'password']
+            exclude: ['id','createdAt','updatedAt','username']
           })
         }
       }
     })
     newUserRequest: Userwithpassword
-  ): Promise<User> {
-    return this.userService.createUser(newUserRequest)
+  ){
+    await validateCredentials(_.pick(newUserRequest, ['email', 'password']),this.userRepository)
+    const hashedPassword=await this.hasher.hashPassword(newUserRequest.password)
+    const newUser=await this.userRepository.create({email:newUserRequest.email})
+    await this.userRepository.usercredentials(newUserRequest?.id).create({password:hashedPassword})
+    return newUser
   }
 
   // @post('/auth/login', {

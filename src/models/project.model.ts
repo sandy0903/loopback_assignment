@@ -47,6 +47,7 @@ export class Project extends Entity {
 }
 
 export interface ProjectRelations {
+  
   // describe navigational properties here
 }
 

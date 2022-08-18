@@ -21,31 +21,8 @@ export class Validator2Service {
     public passwordHasher: PasswordHasher
   ) {}
 
-  async validateCredentials(usercredentials: Usercredentials): Promise<User> {
-    const invalidCredentialsError = 'invalid-email-or-password'
 
-    const foundUser=await this.userRepository.findOne({
-      where:{
-          email:usercredentials.email
-      }
-  })
-    if (!foundUser) {
-      throw new HttpErrors.Unauthorized(invalidCredentialsError)
-    }
 
-    const credentialsFound = await this.userRepository.usercredentials(foundUser.id).get()
-    if (!credentialsFound) {
-      throw new HttpErrors.Unauthorized(invalidCredentialsError)
-    }
-
-    const passwordMatched = await this.passwordHasher.comparePassword(usercredentials.password , credentialsFound.password)
-
-    if (!passwordMatched) {
-      throw new HttpErrors.Unauthorized(invalidCredentialsError)
-    }
-
-    return foundUser
-  }
   async createUser(userWithPassword: Userwithpassword): Promise<User> {
     const password = await this.passwordHasher.hashPassword(
       userWithPassword.password,
