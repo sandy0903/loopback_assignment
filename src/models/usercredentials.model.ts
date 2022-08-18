@@ -24,20 +24,7 @@ required:true
   })
   email: string;
 
-  @property({
-    type: 'boolean',
-  })
-  isDeleted?: boolean;
 
-  @property({
-    type: 'date',
-  })
-  updatedAt?: string;
-
-  @property({
-    type: 'date',
-  })
-  createdAt?: string;
   @belongsTo(() => Project)
   projectId: number;
 

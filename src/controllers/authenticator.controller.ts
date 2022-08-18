@@ -22,26 +22,26 @@ import {
   requestBody
 
 } from '@loopback/rest';
-import {User} from '../models';
+import {User, Usercredentials} from '../models';
 import { BcryptHasher, validateCredentials, Validator2Service } from '../services';
 // import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 import _ from 'lodash';
 import { UserRepository} from '../repositories';
 // import { createSecureServer } from 'http2';
-
+import {PasswordHasher} from '../services';
 import { Userwithpassword } from '../models';
-import { PasswordHasherBindings } from '../key';
-
-
+// import { PasswordHasherBindings } from '../key';
+import { promisify } from 'util';
+import { hash } from 'bcryptjs';
 export class AuthenticationUser {
-
+  private hashAsync = promisify(hash);
   constructor(
     @repository(UserRepository)
     public userRepository: UserRepository,
     @service(Validator2Service)
     public userService: Validator2Service,
-    @inject(PasswordHasherBindings.PASSWORD_HASHER)
-    public hasher:BcryptHasher
+    // @inject(PasswordHasherBindings.PASSWORD_HASHER)
+    public hasher:PasswordHasher
   ) {}
   @post('/auth/sign-up', {
     responses: {
@@ -56,7 +56,7 @@ export class AuthenticationUser {
       content: {
         'application/json': {
           schema: getModelSchemaRef(Userwithpassword,{
-            title: 'NewUser',
+            title: 'Sign up',
             exclude: ['id','createdAt','updatedAt','username']
           })
         }
@@ -90,9 +90,18 @@ export class AuthenticationUser {
   //     }
   //   }
   // })
-  // async login(@requestBody(CredentialsRequestBody) credentials: Credentials): Promise<LoginResponse> {
+  // async login(@requestBody({
+  //   content: {
+  //     'application/json': {
+  //       schema: getModelSchemaRef(Userwithpassword,{
+  //         title: 'NewUser',
+  //         exclude: ['id','createdAt','updatedAt','username']
+  //       })
+  //     }
+  //   }
+  // }) usercredential: Usercredentials){
   //   // ensure the user exists, and the password is correct
-  //   const user = await this.userService.verifyCredentials(credentials)
+  //   const user = await this.userService.verifyCredentials(usercredential)
 
   //   // convert a User object into a UserProfile object (reduced set of properties)
   //   const userProfile = this.userService.convertToUserProfile(user)

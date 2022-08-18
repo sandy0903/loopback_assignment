@@ -20,7 +20,39 @@ export class Validator2Service {
     @inject(PasswordHasherBindings.PASSWORD_HASHER)
     public passwordHasher: PasswordHasher
   ) {}
+  // async verifyCredentials(usercredential: Usercredentials): Promise<User> {
+  //   const {email, password} = usercredential;
+  //   const invalidCredentialsError = 'Invalid email or password.';
 
+  //   if (!email) {
+  //     throw new HttpErrors.Unauthorized(invalidCredentialsError);
+  //   }
+  //   const foundUser = await this.userRepository.findOne({
+  //     where: {email},
+  //   });
+  //   if (!foundUser) {
+  //     throw new HttpErrors.Unauthorized(invalidCredentialsError);
+  //   }
+
+  //   const credentialsFound = await this.userRepository.findOne({
+  //     foundUser.id
+  //   }
+  //   );
+  //   if (!credentialsFound) {
+  //     throw new HttpErrors.Unauthorized(invalidCredentialsError);
+  //   }
+
+  //   const passwordMatched = await this.passwordHasher.comparePassword(
+  //     password,
+  //     credentialsFound.password,
+  //   );
+
+  //   if (!passwordMatched) {
+  //     throw new HttpErrors.Unauthorized(invalidCredentialsError);
+  //   }
+
+  //   return foundUser;
+  // }
 
 
   async createUser(userWithPassword: Userwithpassword): Promise<User> {
