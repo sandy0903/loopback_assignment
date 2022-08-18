@@ -1,8 +1,8 @@
 import {Entity, model, property, hasMany, belongsTo, hasOne} from '@loopback/repository';
-import {Projectuser} from './projectuser.model';
-import {Project} from './project.model';
+import {Projectuser, ProjectuserWithRelations} from './projectuser.model';
+import {Project, ProjectWithRelations} from './project.model';
 import { RoleEnum } from '../enum/user';
-import {Usercredentials} from './usercredentials.model';
+import {Usercredentials, UsercredentialsWithRelations} from './usercredentials.model';
 
 @model()
 export class User extends Entity {
@@ -14,18 +14,18 @@ export class User extends Entity {
   id?: number;
 
   @property({
-    type: 'array',
-    itemType: 'string',
-    jsonSchema: {
-      enum: Object.values(RoleEnum)
-    }
+    type: 'string',
   })
-  roles?: RoleEnum[]
+  role: string;
 
+@property({
+    type: 'string',
+  })
+  email: string;
   @property({
     type: 'string',
   })
-  username?: string;
+  username: string;
 
   @property({
     type: 'boolean',
@@ -62,6 +62,9 @@ export class User extends Entity {
 }
 
 export interface UserRelations {
+  project?: ProjectWithRelations[]
+  projectusers?: ProjectuserWithRelations[]
+  usercredentials?: UsercredentialsWithRelations[]
   // describe navigational properties here
 }
 

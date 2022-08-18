@@ -3,3 +3,4 @@ export * from './task.model';
 export * from './user.model';
 export * from './projectuser.model';
 export * from './usercredentials.model';
+export * from './userwithpassword.model';

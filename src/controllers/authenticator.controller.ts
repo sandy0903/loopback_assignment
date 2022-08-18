@@ -23,38 +23,23 @@ import {
 
 } from '@loopback/rest';
 import {User} from '../models';
-import {validateCredentials, createUser} from "../services/validator.service"
-import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
+import { Validator2Service } from '../services';
+// import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 import _ from 'lodash';
-import { RoleEnum } from '../enum/user';
-import { Usercredentials } from "../models";
-import {UsercredentialsRepository, UserRepository} from '../repositories';
-import { createSecureServer } from 'http2';
+import { UserRepository} from '../repositories';
+// import { createSecureServer } from 'http2';
+
+import { Userwithpassword } from '../models';
 
 
-@model()
-export class UserWithPassword extends User {
-  @property({
-    type: 'string',
-    required: true
-  })
-  password: string
-  @property({
-    type: 'string',
-    required: true
-  })
-  email: string
-}
-
-export class UserManagementController {
+export class AuthenticationUser {
   constructor(
     @repository(UserRepository)
-    public userRepository: UserRepository
-
+    public userRepository: UserRepository,
+    @service(Validator2Service)
+    public userService: Validator2Service
 
   ) {}
-
-
   @post('/users/sign-up', {
     responses: {
       '200': {
@@ -67,21 +52,19 @@ export class UserManagementController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(Usercredentials)
+          schema: getModelSchemaRef(Userwithpassword,{
+            title: 'NewUser',
+            exclude: ['id', 'password']
+          })
         }
       }
     })
-    newUserRequest: UserWithPassword
+    newUserRequest: Userwithpassword
   ): Promise<User> {
-  //  console.log(newUserRequest.email)
-
-
-    return createUser(newUserRequest,this.userRepository)
-    // return newUserRequest
-
+    return this.userService.createUser(newUserRequest)
   }
 
-  // @post('/users/login', {
+  // @post('/auth/login', {
   //   responses: {
   //     '200': {
   //       description: 'Login user',
@@ -108,12 +91,7 @@ export class UserManagementController {
   //   const userProfile = this.userService.convertToUserProfile(user)
   //   // create a JSON Web Token based on the user profile
   //   const token = await this.jwtService.generateToken(userProfile)
-  //   const { roles, platform } = userProfile
-  //   const { isInactive } = user
-  //   return { token, roles, platform, isInactive }
+
+  //   return {}
   // }
-
-
-
-
 }

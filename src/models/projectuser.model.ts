@@ -1,5 +1,5 @@
 import {Entity, model, property, belongsTo} from '@loopback/repository';
-import {Project} from './project.model';
+import {Project, ProjectWithRelations} from './project.model';
 
 @model()
 export class Projectuser extends Entity {
@@ -38,6 +38,7 @@ export class Projectuser extends Entity {
 }
 
 export interface ProjectuserRelations {
+  project?: ProjectWithRelations[]
   // describe navigational properties here
 }
 

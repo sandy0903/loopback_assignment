@@ -1,10 +1,17 @@
 import {inject, Getter} from '@loopback/core';
 import {DefaultCrudRepository, repository, HasManyRepositoryFactory, BelongsToAccessor, HasOneRepositoryFactory} from '@loopback/repository';
 import {MongdbDataSource} from '../datasources';
-import {User, UserRelations, Projectuser, Project, Usercredentials} from '../models';
+import {User, UserRelations, Projectuser, Project,Usercredentials} from '../models';
 import {ProjectuserRepository} from './projectuser.repository';
 import {ProjectRepository} from './project.repository';
 import {UsercredentialsRepository} from './usercredentials.repository';
+
+
+export type Credentials = {
+  email: string
+  password: string
+
+}
 
 export class UserRepository extends DefaultCrudRepository<
   User,
