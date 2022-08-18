@@ -9,6 +9,8 @@ import {RestApplication} from '@loopback/rest';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
 import {MySequence} from './sequence';
+import {PasswordHasherBindings} from './key';
+import { BcryptHasher } from './services';
 
 export {ApplicationConfig};
 
@@ -17,7 +19,8 @@ export class AppAssigmentApplication extends BootMixin(
 ) {
   constructor(options: ApplicationConfig = {}) {
     super(options);
-
+    this.bind(PasswordHasherBindings.PASSWORD_HASHER).toClass(BcryptHasher),
+    this.bind(PasswordHasherBindings.ROUNDS).to(10),
     // Set up the custom sequence
     this.sequence(MySequence);
 

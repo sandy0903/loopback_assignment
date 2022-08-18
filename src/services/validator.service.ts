@@ -7,18 +7,17 @@ export function validateCredentials(usercredentials: Credentials,userRepository:
   if (!isemail.validate(usercredentials.email)) {
     throw new HttpErrors.UnprocessableEntity('invalid-email')
   }
+
   const findUser=userRepository.findOne({
     where:{
       email:usercredentials.email
     }
   })
   if(findUser!==null){
+    // console.log(findUser)
     throw new HttpErrors.UnprocessableEntity('Account already exist')
 
-  }else{
-    return true
   }
-
   // Validate Password Length
   if (!usercredentials.password || usercredentials.password.length < 8 ) {
     throw new HttpErrors.UnprocessableEntity('password-must-be-minimum-8-characters')

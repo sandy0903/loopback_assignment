@@ -30,7 +30,7 @@ import { UserRepository} from '../repositories';
 // import { createSecureServer } from 'http2';
 import {PasswordHasher} from '../services';
 import { Userwithpassword } from '../models';
-// import { PasswordHasherBindings } from '../key';
+import { PasswordHasherBindings } from '../key';
 import { promisify } from 'util';
 import { hash } from 'bcryptjs';
 export class AuthenticationUser {
@@ -40,7 +40,7 @@ export class AuthenticationUser {
     public userRepository: UserRepository,
     @service(Validator2Service)
     public userService: Validator2Service,
-    // @inject(PasswordHasherBindings.PASSWORD_HASHER)
+    @inject(PasswordHasherBindings.PASSWORD_HASHER)
     public hasher:PasswordHasher
   ) {}
   @post('/auth/sign-up', {
@@ -64,7 +64,7 @@ export class AuthenticationUser {
     })
     newUserRequest: Userwithpassword
   ){
-    await validateCredentials(_.pick(newUserRequest, ['email', 'password']),this.userRepository)
+    await validateCredentials(_.pick(newUserRequest,["password","email"]),this.userRepository)
     const hashedPassword=await this.hasher.hashPassword(newUserRequest.password)
     const newUser=await this.userRepository.create({email:newUserRequest.email})
     await this.userRepository.usercredentials(newUserRequest?.id).create({password:hashedPassword})

@@ -22,6 +22,7 @@ export class User extends Entity {
     type: 'string',
   })
   email: string;
+
   @property({
     type: 'string',
   })
