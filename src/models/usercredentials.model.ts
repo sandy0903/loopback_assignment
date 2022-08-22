@@ -13,7 +13,8 @@ export class Usercredentials extends Entity {
   id?: number;
 
   @property({
-    type: 'string'
+    type: 'string',
+    required:true
   })
   password: string;
 
@@ -25,10 +26,10 @@ required:true
 
 
   @belongsTo(() => Project)
-  projectId: number;
+  projectId?: number;
 
   @belongsTo(() => User)
-  userId?: number;
+  userId?: string;
 
   constructor(data?: Partial<Usercredentials>) {
     super(data);

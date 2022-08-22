@@ -30,23 +30,16 @@ export class Validator2Service {
     if (!email) {
       throw new HttpErrors.Unauthorized(invalidCredentialsError);
     }
-    const foundUser = await this.userRepository.findOne({
-      where: {email:usercredential.email},
-    });
+    const foundUser = await this.userRepository.findById('630394daa6f67f85e25d2310');
     if (!foundUser) {
       throw new HttpErrors.Unauthorized(invalidCredentialsError);
     }
 
-    const credentialsFound = await this.userRepository.findCredentials(
-      foundUser.id
-    );
-    if (!credentialsFound) {
-      throw new HttpErrors.Unauthorized(invalidCredentialsError);
-    }
+
 
     const passwordMatched = await this.passwordHasher.comparePassword(
-      password,
-      credentialsFound.password,
+      usercredential.password,
+      foundUser?.usercredentials?.password
     );
 
     if (!passwordMatched) {
@@ -56,6 +49,7 @@ export class Validator2Service {
     return foundUser;
   }
 
+
   convertToUserProfile(user: User):UserProfile {
     // since first name and lastName are optional, no error is thrown if not provided
     // let userName = '';
@@ -64,15 +58,13 @@ export class Validator2Service {
     //   userName = user.firstName
     //     ? `${userName} ${user.lastName}`
     //     : `${user.lastName}`;
-    return {
-      [securityId]:"",
-      id:user.id,
-      email: user.email
-
-
-
-
-    };
+    const userProfile: UserProfile = {
+      [securityId]:  user.id!,
+      name: user.username,
+      id: user.id,
+      email: user.email,
+      };
+    return userProfile;
   }
 
 

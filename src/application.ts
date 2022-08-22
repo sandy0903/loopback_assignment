@@ -15,6 +15,8 @@ import {MongdbDataSource} from './datasources';
 import {MySequence} from './sequence';
 import { AuthorizationComponent, AuthorizationDecision, AuthorizationOptions, AuthorizationTags } from '@loopback/authorization';
 import { basicAuthorization } from './services/basic.authorizor';
+import { PasswordHasherBindings } from './key';
+import { BcryptHasher } from './services';
 // import {JWTAuthenticationComponent} from './services/jwt-component';
 // import {MySequence} from './sequence';
 export {ApplicationConfig};
@@ -22,7 +24,9 @@ export {ApplicationConfig};
 export class AppAssigmentApplication extends BootMixin(
   ServiceMixin(RepositoryMixin(RestApplication)),
 ) {
-  constructor(options: ApplicationConfig = {}) {
+  constructor(options: ApplicationConfig = {
+
+  }) {
     super(options);
     // Set up the custom sequence
     this.sequence(MySequence);
@@ -41,6 +45,8 @@ export class AppAssigmentApplication extends BootMixin(
       precedence: AuthorizationDecision.DENY,
       defaultDecision: AuthorizationDecision.DENY,
     };
+    this.bind(PasswordHasherBindings.PASSWORD_HASHER).toClass(BcryptHasher),
+this.bind(PasswordHasherBindings.ROUNDS).to(10)
 
     // mount authorization component
     const binding = this.component(AuthorizationComponent);
@@ -76,17 +82,17 @@ export class AppAssigmentApplication extends BootMixin(
     // this.component(CronComponent);
   }
 
-  addSecuritySpec(): void {
-    this.api({
-      openapi: '3.0.0',
-      info: {
-        title: 'TODO API',
-        version: '1.0.0',
-      },
-      paths: {},
-      components: {securitySchemes: SECURITY_SCHEME_SPEC},
-      security: [{jwt: []}],
-      servers: [{url: '/'}],
-    });
-  }
+  // addSecuritySpec(): void {
+  //   this.api({
+  //     openapi: '3.0.0',
+  //     info: {
+  //       title: 'TODO API',
+  //       version: '1.0.0',
+  //     },
+  //     paths: {},
+  //     components: {securitySchemes: SECURITY_SCHEME_SPEC},
+  //     security: [{jwt: []}],
+  //     servers: [{url: '/'}],
+  //   });
+  // }
 }

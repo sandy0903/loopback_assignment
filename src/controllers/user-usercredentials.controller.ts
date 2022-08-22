@@ -39,7 +39,7 @@ export class UserUsercredentialsController {
     },
   })
   async get(
-    @param.path.number('id') id: number,
+    @param.path.string('id') id: string,
     @param.query.object('filter') filter?: Filter<Usercredentials>,
   ): Promise<Usercredentials> {
     return this.userRepository.usercredentials(id).get(filter);
@@ -79,7 +79,7 @@ export class UserUsercredentialsController {
     },
   })
   async patch(
-    @param.path.number('id') id: number,
+    @param.path.string('id') id: string,
     @requestBody({
       content: {
         'application/json': {
@@ -102,7 +102,7 @@ export class UserUsercredentialsController {
     },
   })
   async delete(
-    @param.path.number('id') id: number,
+    @param.path.string('id') id: string,
     @param.query.object('where', getWhereSchemaFor(Usercredentials)) where?: Where<Usercredentials>,
   ): Promise<Count> {
     return this.userRepository.usercredentials(id).delete(where);

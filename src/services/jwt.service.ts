@@ -36,10 +36,10 @@ export class JWTService implements TokenService {
       const decodedToken = await verifyAsync(token, this.jwtSecret);
       // don't copy over  token field 'iat' and 'exp', nor 'email' to user profile
       userProfile = Object.assign(
-        {[securityId]: '', name: ''},
+        {[securityId]: '', email: ''},
         {
           [securityId]: decodedToken.id,
-          name: decodedToken.name,
+          email: decodedToken.email,
           id: decodedToken.id
         },
       );
@@ -57,16 +57,16 @@ export class JWTService implements TokenService {
         'Error generating token : userProfile is null',
       );
     }
-    const userInfoForToken = {
-      id: userProfile[securityId],
-      name: userProfile.name,
-      roles: userProfile.roles,
-    };
+    // const userInfoForToken = {
+    //   id: userProfile[securityId],
+    //   email: userProfile.email
+
+    // };
     // Generate a JSON Web Token
     let token: string;
     try {
-      token = await signAsync(userInfoForToken, this.jwtSecret, {
-        expiresIn: Number(this.jwtExpiresIn),
+      token = await signAsync(userProfile, this.jwtSecret, {
+        expiresIn: 600,
       });
     } catch (error) {
       throw new HttpErrors.Unauthorized(`Error encoding token : ${error}`);

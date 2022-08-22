@@ -31,7 +31,7 @@ export class UserProjectController {
     },
   })
   async getProject(
-    @param.path.number('id') id: typeof User.prototype.id,
+    @param.path.string('id') id: typeof User.prototype.id,
   ): Promise<Project> {
     return this.userRepository.project(id);
   }

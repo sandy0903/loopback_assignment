@@ -39,7 +39,7 @@ export class UserProjectuserController {
     },
   })
   async find(
-    @param.path.number('id') id: number,
+    @param.path.string('id') id: string,
     @param.query.object('filter') filter?: Filter<Projectuser>,
   ): Promise<Projectuser[]> {
     return this.userRepository.projectusers(id).find(filter);
@@ -54,7 +54,7 @@ export class UserProjectuserController {
     },
   })
   async create(
-    @param.path.number('id') id: typeof User.prototype.id,
+    @param.path.string('id') id: typeof User.prototype.id,
     @requestBody({
       content: {
         'application/json': {
@@ -79,7 +79,7 @@ export class UserProjectuserController {
     },
   })
   async patch(
-    @param.path.number('id') id: number,
+    @param.path.string('id') id: string,
     @requestBody({
       content: {
         'application/json': {
@@ -102,7 +102,7 @@ export class UserProjectuserController {
     },
   })
   async delete(
-    @param.path.number('id') id: number,
+    @param.path.string('id') id: string,
     @param.query.object('where', getWhereSchemaFor(Projectuser)) where?: Where<Projectuser>,
   ): Promise<Count> {
     return this.userRepository.projectusers(id).delete(where);

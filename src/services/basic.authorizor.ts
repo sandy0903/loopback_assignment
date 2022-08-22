@@ -22,10 +22,10 @@ import {
     if (authorizationCtx.principals.length > 0) {
       const user = _.pick(authorizationCtx.principals[0], [
         'id',
-        'name',
-        'roles',
+        'email'
+
       ]);
-      currentUser = {[securityId]: user.id, name: user.name, roles: user.roles};
+      currentUser = {[securityId]: user.id, name: user.email};
     } else {
       return AuthorizationDecision.DENY;
     }
@@ -54,7 +54,7 @@ import {
     // Admin and support accounts bypass id verification
     if (
       currentUser.roles.includes('admin') ||
-      currentUser.roles.includes('support')
+      currentUser.roles.includes('user')
     ) {
       return AuthorizationDecision.ALLOW;
     }

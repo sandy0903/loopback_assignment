@@ -30,13 +30,13 @@ import {User, Usercredentials} from '../models';
 import { BcryptHasher, validateCredentials, Validator2Service } from '../services';
 import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 import _ from 'lodash';
-import { UserRepository} from '../repositories';
+import { UserRepository,UsercredentialsRepository} from '../repositories';
 // import { createSecureServer } from 'http2';
 import {PasswordHasher} from '../services';
 import { Userwithpassword } from '../models';
 import { PasswordHasherBindings } from '../key';
 import { promisify } from 'util';
-import { hash } from 'bcryptjs';
+import { genSalt, hash } from 'bcryptjs';
 
 
 // @authenticate('jwt')
@@ -47,6 +47,10 @@ const CredentialsSchema: SchemaObject = {
     email: {
       type: 'string',
       format: 'email'
+    },
+    password: {
+      type: 'string',
+      format: 'password'
     }
   },
 };
@@ -57,20 +61,20 @@ export const CredentialsRequestBody = {
     'application/json': {schema: CredentialsSchema},
   },
 };
-@authenticate('jwt')
+// @authenticate('jwt')
 export class AuthenticationUser {
   private hashAsync = promisify(hash);
   constructor(
     @repository(UserRepository)
     public userRepository: UserRepository,
     @service(Validator2Service)
-    // public userService: Validator2Service,
-    // @inject(PasswordHasherBindings.PASSWORD_HASHER)
+    public userService: Validator2Service,
+    @inject(PasswordHasherBindings.PASSWORD_HASHER)
     public hasher:PasswordHasher,
      @inject(TokenServiceBindings.TOKEN_SERVICE)
-    public jwtService: TokenService,
-    @inject(UserServiceBindings.USER_SERVICE)
-    public userService: MyUserService,
+    public jwtService: TokenService
+    // @inject(UserServiceBindings.USER_SERVICE)
+    // public userService: MyUserService,
 
   ) {}
   @post('/auth/sign-up', {
@@ -81,14 +85,14 @@ export class AuthenticationUser {
       }
     }
   })
-  @authenticate('jwt')
+  // @authenticate('jwt')
   async signUp(
     @requestBody({
       content: {
         'application/json': {
           schema: getModelSchemaRef(Userwithpassword,{
             title: 'Sign up',
-            exclude: ['id','username']
+            exclude: ['id','username',"createdAt","updatedAt"]
           })
         }
       }
@@ -96,9 +100,10 @@ export class AuthenticationUser {
     newUserRequest: Userwithpassword
   ){
     await validateCredentials(_.pick(newUserRequest,["password","email"]),this.userRepository)
-    const hashedPassword=await this.hasher.hashPassword(newUserRequest.password)
+    // const password=await this.hasher.hashPassword(newUserRequest.password)
+    const password = await hash(newUserRequest.password, await genSalt());
     const newUser=await this.userRepository.create({email:newUserRequest.email})
-    await this.userRepository.usercredentials(newUserRequest?.id).create({password:hashedPassword})
+    await this.userRepository.usercredentials(newUser.id).create({email:newUser.email,password})
     return newUser
   }
 
@@ -142,17 +147,18 @@ export class AuthenticationUser {
 
   //   return {token}
   // }
-  @authenticate('jwt')
+  // @authenticate('jwt')
   async login(
-    @requestBody(CredentialsRequestBody) credentials: Credentials,
+    @requestBody(CredentialsRequestBody) Usercredentials: Usercredentials,
   ): Promise<{token: string}> {
     // ensure the user exists, and the password is correct
-    const user = await this.userService.verifyCredentials(credentials);
+    const user = await this.userService.verifyCredentials(Usercredentials);
+
     // convert a User object into a UserProfile object (reduced set of properties)
     const userProfile = this.userService.convertToUserProfile(user);
 
     // create a JSON Web Token based on the user profile
     const token = await this.jwtService.generateToken(userProfile);
-    return {token};
+    return Promise.resolve({token:token})
   }
 }
