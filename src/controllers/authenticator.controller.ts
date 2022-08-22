@@ -7,8 +7,10 @@ import {
   authenticate,
   TokenService,
   UserService,
+
 } from '@loopback/authentication';
-import {MyUserService, TokenServiceBindings, UserServiceBindings} from '@loopback/authentication-jwt';
+import {Credentials, MyUserService, TokenServiceBindings, UserServiceBindings} from '@loopback/authentication-jwt';
+
 import {authorize} from '@loopback/authorization';
 import {inject, service} from '@loopback/core';
 import {model, property, repository} from '@loopback/repository';
@@ -20,12 +22,13 @@ import {
   param,
   post,
   put,
-  requestBody
+  requestBody,
+  SchemaObject
 
 } from '@loopback/rest';
 import {User, Usercredentials} from '../models';
 import { BcryptHasher, validateCredentials, Validator2Service } from '../services';
-// import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
+import {SecurityBindings, securityId, UserProfile} from '@loopback/security';
 import _ from 'lodash';
 import { UserRepository} from '../repositories';
 // import { createSecureServer } from 'http2';
@@ -37,6 +40,24 @@ import { hash } from 'bcryptjs';
 
 
 // @authenticate('jwt')
+const CredentialsSchema: SchemaObject = {
+  type: 'object',
+  required: ['email'],
+  properties: {
+    email: {
+      type: 'string',
+      format: 'email'
+    }
+  },
+};
+export const CredentialsRequestBody = {
+  description: 'The input of login function',
+  required: true,
+  content: {
+    'application/json': {schema: CredentialsSchema},
+  },
+};
+@authenticate('jwt')
 export class AuthenticationUser {
   private hashAsync = promisify(hash);
   constructor(
@@ -100,26 +121,38 @@ export class AuthenticationUser {
       }
     }
   })
-  @authenticate('jwt')
-  async login(@requestBody({
-    content: {
-      'application/json': {
-        schema: getModelSchemaRef(Userwithpassword,{
-          title: 'NewUser',
-          exclude: ['id','createdAt','updatedAt','username']
-        })
-      }
-    }
-  }) usercredential: Usercredentials){
-    // ensure the user exists, and the password is correct
-    const user = await this.userService.verifyCredentials(usercredential)
+  // @authenticate('jwt')
+  // async login(@requestBody({
+  //   content: {
+  //     'application/json': {
+  //       schema: getModelSchemaRef(CredentialsSchema,{
+  //         title: 'login user'
+  //       })
+  //     }
+  //   }
+  // }) usercredential: Usercredentials){
+  //   // ensure the user exists, and the password is correct
+  //   const user = await this.userService.verifyCredentials(usercredential)
 
+  //   // convert a User object into a UserProfile object (reduced set of properties)
+  //   const userProfilea = this.userService.convertToUserProfile(user);
+
+  //   // create a JSON Web Token based on the user profile
+  //   const token = await this.jwtService.generateToken(userProfilea)
+
+  //   return {token}
+  // }
+  @authenticate('jwt')
+  async login(
+    @requestBody(CredentialsRequestBody) credentials: Credentials,
+  ): Promise<{token: string}> {
+    // ensure the user exists, and the password is correct
+    const user = await this.userService.verifyCredentials(credentials);
     // convert a User object into a UserProfile object (reduced set of properties)
-    const userProfilea = this.userService.convertToUserProfile(user);
+    const userProfile = this.userService.convertToUserProfile(user);
 
     // create a JSON Web Token based on the user profile
-    const token = await this.jwtService.generateToken(userProfilea)
-
-    return {}
+    const token = await this.jwtService.generateToken(userProfile);
+    return {token};
   }
 }
