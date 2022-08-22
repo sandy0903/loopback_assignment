@@ -36,4 +36,16 @@ export class UserRepository extends DefaultCrudRepository<
     this.projectusers = this.createHasManyRepositoryFactoryFor('projectusers', projectuserRepositoryGetter,);
     this.registerInclusionResolver('projectusers', this.projectusers.inclusionResolver);
   }
+  async findCredentials(
+    userId: typeof User.prototype.id,
+  ): Promise<Usercredentials | undefined> {
+    try {
+      return await this.usercredentials(userId).get();
+    } catch (err) {
+      if (err.code === 'ENTITY_NOT_FOUND') {
+        return undefined;
+      }
+      throw err;
+    }
+  }
 }

@@ -16,7 +16,7 @@ export class User extends Entity {
   @property({
     type: 'string',
   })
-  role: string;
+  role?: string;
 
 @property({
     type: 'string',
@@ -26,7 +26,7 @@ export class User extends Entity {
   @property({
     type: 'string',
   })
-  username: string;
+  username?: string;
 
   @property({
     type: 'boolean',

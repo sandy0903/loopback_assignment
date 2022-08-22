@@ -8,10 +8,11 @@ import {
   TokenService,
   UserService,
 } from '@loopback/authentication';
-import {TokenServiceBindings} from '@loopback/authentication-jwt';
+import {MyUserService, TokenServiceBindings, UserServiceBindings} from '@loopback/authentication-jwt';
 import {authorize} from '@loopback/authorization';
 import {inject, service} from '@loopback/core';
 import {model, property, repository} from '@loopback/repository';
+
 import {
   get,
   getModelSchemaRef,
@@ -33,15 +34,23 @@ import { Userwithpassword } from '../models';
 import { PasswordHasherBindings } from '../key';
 import { promisify } from 'util';
 import { hash } from 'bcryptjs';
+
+
+// @authenticate('jwt')
 export class AuthenticationUser {
   private hashAsync = promisify(hash);
   constructor(
     @repository(UserRepository)
     public userRepository: UserRepository,
     @service(Validator2Service)
-    public userService: Validator2Service,
-    @inject(PasswordHasherBindings.PASSWORD_HASHER)
-    public hasher:PasswordHasher
+    // public userService: Validator2Service,
+    // @inject(PasswordHasherBindings.PASSWORD_HASHER)
+    public hasher:PasswordHasher,
+     @inject(TokenServiceBindings.TOKEN_SERVICE)
+    public jwtService: TokenService,
+    @inject(UserServiceBindings.USER_SERVICE)
+    public userService: MyUserService,
+
   ) {}
   @post('/auth/sign-up', {
     responses: {
@@ -51,13 +60,14 @@ export class AuthenticationUser {
       }
     }
   })
+  @authenticate('jwt')
   async signUp(
     @requestBody({
       content: {
         'application/json': {
           schema: getModelSchemaRef(Userwithpassword,{
             title: 'Sign up',
-            exclude: ['id','createdAt','updatedAt','username']
+            exclude: ['id','username']
           })
         }
       }
@@ -71,43 +81,45 @@ export class AuthenticationUser {
     return newUser
   }
 
-  // @post('/auth/login', {
-  //   responses: {
-  //     '200': {
-  //       description: 'Login user',
-  //       content: {
-  //         'application/json': {
-  //           schema: {
-  //             type: 'object',
-  //             properties: {
-  //               token: {
-  //                 type: 'string'
-  //               }
-  //             }
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }
-  // })
-  // async login(@requestBody({
-  //   content: {
-  //     'application/json': {
-  //       schema: getModelSchemaRef(Userwithpassword,{
-  //         title: 'NewUser',
-  //         exclude: ['id','createdAt','updatedAt','username']
-  //       })
-  //     }
-  //   }
-  // }) usercredential: Usercredentials){
-  //   // ensure the user exists, and the password is correct
-  //   const user = await this.userService.verifyCredentials(usercredential)
+  @post('/auth/login', {
+    responses: {
+      '200': {
+        description: 'Login user',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                token: {
+                  type: 'string'
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+  @authenticate('jwt')
+  async login(@requestBody({
+    content: {
+      'application/json': {
+        schema: getModelSchemaRef(Userwithpassword,{
+          title: 'NewUser',
+          exclude: ['id','createdAt','updatedAt','username']
+        })
+      }
+    }
+  }) usercredential: Usercredentials){
+    // ensure the user exists, and the password is correct
+    const user = await this.userService.verifyCredentials(usercredential)
 
-  //   // convert a User object into a UserProfile object (reduced set of properties)
-  //   const userProfile = this.userService.convertToUserProfile(user)
-  //   // create a JSON Web Token based on the user profile
-  //   const token = await this.jwtService.generateToken(userProfile)
+    // convert a User object into a UserProfile object (reduced set of properties)
+    const userProfilea = this.userService.convertToUserProfile(user);
 
-  //   return {}
-  // }
+    // create a JSON Web Token based on the user profile
+    const token = await this.jwtService.generateToken(userProfilea)
+
+    return {}
+  }
 }

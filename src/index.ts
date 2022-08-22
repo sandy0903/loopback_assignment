@@ -1,4 +1,5 @@
-import {ApplicationConfig, AppAssigmentApplication} from './application';
+import { AppAssigmentApplication} from './application';
+import {ApplicationConfig} from '@loopback/core';
 
 export * from './application';
 

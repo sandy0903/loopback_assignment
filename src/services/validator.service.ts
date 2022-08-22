@@ -2,13 +2,13 @@ import { HttpErrors } from '@loopback/rest'
 import isemail from 'isemail'
 import { Credentials, UserRepository } from '../repositories/user.repository'
 
-export function validateCredentials(usercredentials: Credentials,userRepository:UserRepository) {
+export async function validateCredentials(usercredentials: Credentials,userRepository:UserRepository) {
   // Validate Email
   if (!isemail.validate(usercredentials.email)) {
     throw new HttpErrors.UnprocessableEntity('invalid-email')
   }
 
-  const findUser=userRepository.findOne({
+  const findUser= await userRepository.findOne({
     where:{
       email:usercredentials.email
     }
