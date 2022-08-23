@@ -103,7 +103,8 @@ export class AuthenticationUser {
     // const password=await this.hasher.hashPassword(newUserRequest.password)
     const password = await hash(newUserRequest.password, await genSalt());
     const newUser=await this.userRepository.create({email:newUserRequest.email})
-    await this.userRepository.usercredentials(newUser.id).create({email:newUser.email,password})
+    await this.userRepository.usercredentials(newUser.id).create({password})
+    
     return newUser
   }
 
@@ -149,10 +150,10 @@ export class AuthenticationUser {
   // }
   // @authenticate('jwt')
   async login(
-    @requestBody(CredentialsRequestBody) Usercredentials: Usercredentials,
+    @requestBody(CredentialsRequestBody) credentials: Credentials,
   ): Promise<{token: string}> {
     // ensure the user exists, and the password is correct
-    const user = await this.userService.verifyCredentials(Usercredentials);
+    const user = await this.userService.verifyCredentials(credentials);
 
     // convert a User object into a UserProfile object (reduced set of properties)
     const userProfile = this.userService.convertToUserProfile(user);

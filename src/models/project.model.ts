@@ -3,11 +3,11 @@ import {Entity, model, property} from '@loopback/repository';
 @model()
 export class Project extends Entity {
   @property({
-    type: 'number',
+    type: 'string',
     id: true,
     generated: true,
   })
-  id?: number;
+  id: string;
 
   @property({
     type: 'string',
@@ -18,27 +18,27 @@ export class Project extends Entity {
   @property({
     type: 'string',
   })
-  desc?: string;
+  desc: string;
 
   @property({
     type: 'boolean',
   })
-  isDeleted?: boolean;
+  isDeleted: boolean;
 
   @property({
     type: 'date',
   })
-  updatedAt?: string;
+  updatedAt: string;
 
   @property({
     type: 'date',
   })
-  createdAt?: string;
+  createdAt: string;
 
   @property({
     type: 'string',
   })
-  status?: string;
+  status: string;
 
 
   constructor(data?: Partial<Project>) {

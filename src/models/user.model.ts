@@ -20,6 +20,7 @@ export class User extends Entity {
 
 @property({
     type: 'string',
+    required: true
   })
   email: string;
 
@@ -27,12 +28,6 @@ export class User extends Entity {
     type: 'string',
   })
   username: string;
-  @property({
-    type: 'string',
-    required:true
-
-  })
-  password: string;
 
   @property({
     type: 'boolean',
@@ -58,7 +53,7 @@ export class User extends Entity {
   projectusers: Projectuser[];
 
   @belongsTo(() => Project)
-  projectId: number;
+  projectId: string;
 
   @hasOne(() => Usercredentials)
   usercredentials: Usercredentials;

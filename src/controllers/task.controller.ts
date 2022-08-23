@@ -16,6 +16,7 @@ import {
   del,
   requestBody,
   response,
+  HttpErrors,
 } from '@loopback/rest';
 import {Task} from '../models';
 import {TaskRepository} from '../repositories';
@@ -45,6 +46,27 @@ export class TaskController {
     task: Omit<Task, 'id'>,
   ): Promise<Task> {
     return this.taskRepository.create(task);
+  }
+
+  @post('/tasks/link/{id1}/{id2}')
+  @response(200, {
+    description: 'Task model instance',
+    content: {'application/json': {schema: getModelSchemaRef(Task)}},
+  })
+  async linktaskwithtask(
+   @param.path.string('id1') id1:string,
+   @param.path.string('id2') id2:string
+
+  ):Promise <void>{
+    const currentProject:Task=await this.taskRepository.findById(id1)
+    const linkProject:Task=await this.taskRepository.findById(id2)
+    console.log(currentProject,linkProject)
+    if(String(currentProject.projectId)==String(linkProject.projectId)){
+      return this.taskRepository.updateById(id1,{linkedTaskId:id2})
+    }else{
+      throw new HttpErrors.Unauthorized("Unable to link task with task in other projects")
+    }
+
   }
 
   @get('/tasks/count')
@@ -105,7 +127,7 @@ export class TaskController {
     },
   })
   async findById(
-    @param.path.number('id') id: number,
+    @param.path.string('id') id: string,
     @param.filter(Task, {exclude: 'where'}) filter?: FilterExcludingWhere<Task>
   ): Promise<Task> {
     return this.taskRepository.findById(id, filter);
@@ -116,7 +138,7 @@ export class TaskController {
     description: 'Task PATCH success',
   })
   async updateById(
-    @param.path.number('id') id: number,
+    @param.path.string('id') id: string,
     @requestBody({
       content: {
         'application/json': {
@@ -134,7 +156,7 @@ export class TaskController {
     description: 'Task PUT success',
   })
   async replaceById(
-    @param.path.number('id') id: number,
+    @param.path.string('id') id: string,
     @requestBody() task: Task,
   ): Promise<void> {
     await this.taskRepository.replaceById(id, task);
@@ -144,7 +166,7 @@ export class TaskController {
   @response(204, {
     description: 'Task DELETE success',
   })
-  async deleteById(@param.path.number('id') id: number): Promise<void> {
+  async deleteById(@param.path.string('id') id: string): Promise<void> {
     await this.taskRepository.deleteById(id);
   }
 }

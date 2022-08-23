@@ -1,3 +1,4 @@
+import { inject } from '@loopback/core';
 import {
   Count,
   CountSchema,
@@ -16,15 +17,103 @@ import {
   del,
   requestBody,
   response,
+  HttpErrors,
 } from '@loopback/rest';
-import {Project} from '../models';
-import {ProjectRepository} from '../repositories';
+import {Project, Task} from '../models';
+import {ProjectRepository, ProjectuserRepository, TaskRepository} from '../repositories';
+import {UserProfile, SecurityBindings} from '@loopback/security';
 
 export class ProjectController {
   constructor(
     @repository(ProjectRepository)
     public projectRepository : ProjectRepository,
+    @repository(ProjectuserRepository)
+    public projectuserRepository : ProjectuserRepository,
+    @repository(TaskRepository)
+    public taskRepository : TaskRepository,
   ) {}
+  @post('/projects/{id}/tasks')
+  @response(200, {
+    description: 'Project model instance',
+    content: {'application/json': {schema: getModelSchemaRef(Task)}},
+  })
+  async createtaskProject(
+    @param.path.string('id') projectId:typeof Project.prototype.id,
+    @inject(SecurityBindings.USER)
+    currentUser:UserProfile,
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(Task, {
+            title: 'NewProject',
+            exclude: ['id'],
+          }),
+        },
+      },
+    })
+    task: Omit<Task, 'id'>,
+  ): Promise<Task> {
+    const userId=currentUser?.id;
+    const projectUser= await this.projectuserRepository?.findOne({
+      where:{
+        userId,
+        projectId
+      }
+    })
+    if(!projectId){
+      throw new HttpErrors.Unauthorized('You have not permistion to access this project')
+    }
+    const projectRole=projectUser?.role
+
+    return this.taskRepository.create({
+      ...task,
+      userId,
+      projectId
+    })
+  }
+  @get('/projects/{id}/tasks')
+  @response(200, {
+    description: 'Array of task',
+    content: {'application/json': {schema: {
+      type:'array',
+      items:getModelSchemaRef(Task),
+    }}},
+  })
+  async getTaskByProjectId(
+    @param.path.string('id') projectId:typeof Project.prototype.id,
+    @inject(SecurityBindings.USER)
+    currentUser:UserProfile,
+  ): Promise<Task[]> {
+    const userId=currentUser.id;
+    const projectUser= await this.projectuserRepository.findOne({
+      where:{
+        userId,
+        projectId
+      }
+    })
+    if(!projectUser){
+      throw new HttpErrors.Unauthorized('You have not permistion to access this project')
+    }
+    const tasks:Task[]=await this.taskRepository.find({
+      where:{
+        userId,
+        projectId
+      },
+      include:[
+        {
+          relation:'user'
+        }
+      ]
+    })
+
+    const userRole=projectUser.role
+    if(userRole=='admin'){
+      return tasks
+    }
+    return tasks.filter(task=>task.createdBy=='user')
+  }
+
+
 
   @post('/projects')
   @response(200, {
@@ -105,7 +194,7 @@ export class ProjectController {
     },
   })
   async findById(
-    @param.path.number('id') id: number,
+    @param.path.string('id') id: string,
     @param.filter(Project, {exclude: 'where'}) filter?: FilterExcludingWhere<Project>
   ): Promise<Project> {
     return this.projectRepository.findById(id, filter);
@@ -116,7 +205,7 @@ export class ProjectController {
     description: 'Project PATCH success',
   })
   async updateById(
-    @param.path.number('id') id: number,
+    @param.path.string('id') id: string,
     @requestBody({
       content: {
         'application/json': {
@@ -134,7 +223,7 @@ export class ProjectController {
     description: 'Project PUT success',
   })
   async replaceById(
-    @param.path.number('id') id: number,
+    @param.path.string('id') id: string,
     @requestBody() project: Project,
   ): Promise<void> {
     await this.projectRepository.replaceById(id, project);
@@ -144,7 +233,8 @@ export class ProjectController {
   @response(204, {
     description: 'Project DELETE success',
   })
-  async deleteById(@param.path.number('id') id: number): Promise<void> {
+  async deleteById(@param.path.string('id') id: string): Promise<void> {
     await this.projectRepository.deleteById(id);
   }
+
 }

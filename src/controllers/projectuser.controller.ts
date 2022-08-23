@@ -105,7 +105,7 @@ export class ProjectuserController {
     },
   })
   async findById(
-    @param.path.number('id') id: number,
+    @param.path.string('id') id: string,
     @param.filter(Projectuser, {exclude: 'where'}) filter?: FilterExcludingWhere<Projectuser>
   ): Promise<Projectuser> {
     return this.projectuserRepository.findById(id, filter);
@@ -116,7 +116,7 @@ export class ProjectuserController {
     description: 'Projectuser PATCH success',
   })
   async updateById(
-    @param.path.number('id') id: number,
+    @param.path.string('id') id: string,
     @requestBody({
       content: {
         'application/json': {
@@ -134,7 +134,7 @@ export class ProjectuserController {
     description: 'Projectuser PUT success',
   })
   async replaceById(
-    @param.path.number('id') id: number,
+    @param.path.string('id') id: string,
     @requestBody() projectuser: Projectuser,
   ): Promise<void> {
     await this.projectuserRepository.replaceById(id, projectuser);
@@ -144,7 +144,7 @@ export class ProjectuserController {
   @response(204, {
     description: 'Projectuser DELETE success',
   })
-  async deleteById(@param.path.number('id') id: number): Promise<void> {
+  async deleteById(@param.path.string('id') id: string): Promise<void> {
     await this.projectuserRepository.deleteById(id);
   }
 }

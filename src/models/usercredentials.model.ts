@@ -6,27 +6,17 @@ import {User} from './user.model';
 @model()
 export class Usercredentials extends Entity {
   @property({
-    type: 'number',
+    type: 'string',
     id: true,
     generated: true,
   })
-  id?: number;
+  id: string;
 
   @property({
     type: 'string',
     required:true
   })
   password: string;
-
-  @property({
-    type: 'string',
-required:true
-  })
-  email: string;
-
-
-  @belongsTo(() => Project)
-  projectId?: number;
 
   @belongsTo(() => User)
   userId?: string;
@@ -38,8 +28,6 @@ required:true
 
 export interface UsercredentialsRelations {
   user?: UserWithRelations[]
-
-  project?: ProjectWithRelations[]
   // describe navigational properties here
 }
 

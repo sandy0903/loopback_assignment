@@ -4,33 +4,33 @@ import {Project, ProjectWithRelations} from './project.model';
 @model()
 export class Projectuser extends Entity {
   @property({
-    type: 'number',
+    type: 'string',
     id: true,
     generated: true,
   })
-  id?: number;
+  id: string;
 
-  @property({
-    type: 'number',
-  })
-  userId?: number;
   @property({
     type: 'string',
   })
-  role?: string;
+  userId: string;
+  @property({
+    type: 'string',
+  })
+  role: string;
 
   @property({
     type: 'date',
   })
-  createdAt?: string;
+  createdAt: string;
 
   @property({
     type: 'date',
   })
-  updatedAt?: string;
+  updatedAt: string;
 
   @belongsTo(() => Project)
-  projectId: number;
+  projectId: string;
 
   constructor(data?: Partial<Projectuser>) {
     super(data);

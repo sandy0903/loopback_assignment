@@ -2,21 +2,22 @@ import { UserWithRelations } from '@loopback/authentication-jwt';
 import {Entity, model, property, belongsTo} from '@loopback/repository';
 import {Projectuser, ProjectuserWithRelations} from './projectuser.model';
 import {User} from './user.model';
+
 // import {Task} from './task.model';
 
 @model()
 export class Task extends Entity {
   @property({
-    type: 'number',
+    type: 'string',
     id: true,
     generated: true,
   })
-  id?: number;
+  id: string;
 
   @property({
-    type: 'number',
+    type: 'string',
   })
-  createdBy?: number;
+  createdBy?: string;
 
   @property({
     type: 'number',
@@ -24,14 +25,14 @@ export class Task extends Entity {
   assignedTo?: number;
 
   @property({
-    type: 'number',
+    type: 'string',
   })
-  projectId?: number;
+  projectId?: string;
 
   @property({
-    type: 'number',
+    type: 'string',
   })
-  linkedTaskId?: number;
+  linkedTaskId: string;
 
   @property({
     type: 'string',
@@ -64,16 +65,13 @@ export class Task extends Entity {
   updatedAt?: string;
 
   @belongsTo(() => Projectuser)
-  projectuserId: number;
+  projectuserId: string;
 
   @belongsTo(() => User)
-  userId: number;
+  userId: string;
 
   @belongsTo(() => Task)
-  taskId: number;
-
-  @belongsTo(() => Task)
-  linkId: number;
+  linktaskId: string;
 
   constructor(data?: Partial<Task>) {
     super(data);

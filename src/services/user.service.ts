@@ -12,6 +12,7 @@ import { BindingKey } from '@loopback/context'
 import { validateCredentials } from './validator.service';
 import { PasswordHasherBindings } from '../key';
 import { PasswordHasher } from './hash.password.bcryptjs';
+import { Credentials } from '@loopback/authentication-jwt';
 
 
 @injectable({scope: BindingScope.TRANSIENT})
@@ -23,8 +24,8 @@ export class Validator2Service {
     @inject(PasswordHasherBindings.PASSWORD_HASHER)
     public passwordHasher: PasswordHasher
   ) {}
-  async verifyCredentials(usercredential: Usercredentials): Promise<User> {
-    const {email, password} = usercredential;
+  async verifyCredentials(credential: Credentials): Promise<User> {
+    const {email, password} = credential;
     const invalidCredentialsError = 'Invalid email or password.';
 
     if (!email) {
@@ -32,8 +33,9 @@ export class Validator2Service {
     }
     const foundUser = await this.userRepository.findOne({
       where: {
-        email: usercredential.email
-      }
+        email: email
+      },
+      include: ['usercredentials']
     });
     if (!foundUser) {
       throw new HttpErrors.Unauthorized(invalidCredentialsError);
@@ -42,8 +44,8 @@ export class Validator2Service {
 
 
     const passwordMatched = await this.passwordHasher.comparePassword(
-      usercredential.password,
-      foundUser?.password
+      password,
+      foundUser?.usercredentials?.password
     );
 
     if (!passwordMatched) {
