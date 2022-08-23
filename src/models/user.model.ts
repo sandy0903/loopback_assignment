@@ -26,7 +26,13 @@ export class User extends Entity {
   @property({
     type: 'string',
   })
-  username?: string;
+  username: string;
+  @property({
+    type: 'string',
+    required:true
+
+  })
+  password: string;
 
   @property({
     type: 'boolean',

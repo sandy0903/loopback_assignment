@@ -30,7 +30,11 @@ export class Validator2Service {
     if (!email) {
       throw new HttpErrors.Unauthorized(invalidCredentialsError);
     }
-    const foundUser = await this.userRepository.findById('630394daa6f67f85e25d2310');
+    const foundUser = await this.userRepository.findOne({
+      where: {
+        email: usercredential.email
+      }
+    });
     if (!foundUser) {
       throw new HttpErrors.Unauthorized(invalidCredentialsError);
     }
@@ -39,7 +43,7 @@ export class Validator2Service {
 
     const passwordMatched = await this.passwordHasher.comparePassword(
       usercredential.password,
-      foundUser?.usercredentials?.password
+      foundUser?.password
     );
 
     if (!passwordMatched) {
