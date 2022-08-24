@@ -60,7 +60,7 @@ export class ProjectController {
         projectId
       }
     })
-    if(!projectId){
+    if(!projectUser){
       throw new HttpErrors.Unauthorized('You have not permistion to access this project')
     }
     const projectRole=projectUser?.role

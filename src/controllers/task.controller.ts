@@ -60,9 +60,9 @@ export class TaskController {
   ):Promise <void>{
     const currentProject:Task=await this.taskRepository.findById(id1)
     const linkProject:Task=await this.taskRepository.findById(id2)
-    console.log(currentProject,linkProject)
+
     if(String(currentProject.projectId)==String(linkProject.projectId)){
-      return this.taskRepository.updateById(id1,{linkedTaskId:id2})
+      return this.taskRepository.updateById(id1,{linkTaskId:id2})
     }else{
       throw new HttpErrors.Unauthorized("Unable to link task with task in other projects")
     }

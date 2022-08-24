@@ -1,5 +1,6 @@
 import { UserWithRelations } from '@loopback/authentication-jwt';
 import {Entity, model, property, belongsTo} from '@loopback/repository';
+import { Project, ProjectWithRelations } from './project.model';
 import {Projectuser, ProjectuserWithRelations} from './projectuser.model';
 import {User} from './user.model';
 
@@ -24,15 +25,15 @@ export class Task extends Entity {
   })
   assignedTo?: number;
 
-  @property({
-    type: 'string',
-  })
-  projectId?: string;
+  // @property({
+  //   type: 'string',
+  // })
+  // projectId?: string;
 
-  @property({
-    type: 'string',
-  })
-  linkedTaskId: string;
+  // @property({
+  //   type: 'string',
+  // })
+  // linkedTaskId: string;
 
   @property({
     type: 'string',
@@ -64,14 +65,14 @@ export class Task extends Entity {
   })
   updatedAt?: string;
 
-  @belongsTo(() => Projectuser)
-  projectuserId: string;
+  @belongsTo(() => Project)
+  projectId: string;
 
   @belongsTo(() => User)
   userId: string;
 
   @belongsTo(() => Task)
-  linktaskId: string;
+  linkTaskId: string;
 
   constructor(data?: Partial<Task>) {
     super(data);
@@ -79,8 +80,8 @@ export class Task extends Entity {
 }
 
 export interface TaskRelations {
-  tasks?: TaskWithRelations[]
-  projectusers?: ProjectuserWithRelations[]
+  task?: TaskWithRelations[]
+  project?: ProjectWithRelations[]
   user?: UserWithRelations[]
   // describe navigational properties here
 }
