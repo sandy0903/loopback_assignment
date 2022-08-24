@@ -27,6 +27,26 @@ export class TaskController {
     public taskRepository : TaskRepository,
   ) {}
 
+  @post('/tasks/link/{id1}/{id2}')
+  @response(200, {
+    description: 'Task model instance',
+    content: {'application/json': {schema: getModelSchemaRef(Task)}},
+  })
+  async linkTaskWithTask(
+    @param.path.string('id1') id1:string,
+    @param.path.string('id2') id2:string,
+
+  ): Promise<void> {
+    const currentProject:Task=await this.taskRepository.findById(id1)
+    const linkToProject:Task=await this.taskRepository.findById(id2)
+  if(String(currentProject.projectId)==String(linkToProject.projectId)){
+    return this.taskRepository.updateById(id1,{linkTaskId:id2})
+  }else{
+
+    throw new HttpErrors.Unauthorized("Unable to link task - not in the same project")
+  }
+  }
+
   @post('/tasks')
   @response(200, {
     description: 'Task model instance',
@@ -46,27 +66,6 @@ export class TaskController {
     task: Omit<Task, 'id'>,
   ): Promise<Task> {
     return this.taskRepository.create(task);
-  }
-
-  @post('/tasks/link/{id1}/{id2}')
-  @response(200, {
-    description: 'Task model instance',
-    content: {'application/json': {schema: getModelSchemaRef(Task)}},
-  })
-  async linktaskwithtask(
-   @param.path.string('id1') id1:string,
-   @param.path.string('id2') id2:string
-
-  ):Promise <void>{
-    const currentProject:Task=await this.taskRepository.findById(id1)
-    const linkProject:Task=await this.taskRepository.findById(id2)
-
-    if(String(currentProject.projectId)==String(linkProject.projectId)){
-      return this.taskRepository.updateById(id1,{linkTaskId:id2})
-    }else{
-      throw new HttpErrors.Unauthorized("Unable to link task with task in other projects")
-    }
-
   }
 
   @get('/tasks/count')
