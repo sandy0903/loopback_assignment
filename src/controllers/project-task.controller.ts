@@ -1,3 +1,5 @@
+import { authenticate } from '@loopback/authentication';
+import { authorize } from '@loopback/authorization';
 import { inject } from '@loopback/core';
 import {
   Count,
@@ -24,7 +26,7 @@ import {
   Task,
 } from '../models';
 import {ProjectRepository, ProjectuserRepository, TaskRepository} from '../repositories';
-
+@authenticate('jwt')
 export class ProjectTaskController {
   constructor(
     @repository(ProjectRepository) protected projectRepository: ProjectRepository,
@@ -47,21 +49,21 @@ export class ProjectTaskController {
     },
   })
   async getTaskByProjectId(
+    @inject(SecurityBindings.USER) user: UserProfile,
     @param.path.string('id') projectId: string,
-    // @inject(SecurityBindings.USER) user: UserProfile,
   ): Promise<Task[]> {
-    console.log("user")
-    // const userId=currentUser?.id;
-    // const projectUser=await this.projectUserRepository.findOne({
-    //   where:{
-    //     userId,
-    //     projectId
-    //   }
-    // })
-    // if(!projectUser){
-    //   throw new HttpErrors.Unauthorized("Do not have access")
+    // console.log(user)
+    const userId=user?.id;
+    const projectUser=await this.projectUserRepository.findOne({
+      where:{
+        userId,
+        projectId
+      }
+    })
+    if(!projectUser){
+      throw new HttpErrors.Unauthorized("Do not have access")
 
-    // }
+    }
     // const tasks:Task[]=await this.taskRepository.find({
     //   where:{
     //     projectId,
