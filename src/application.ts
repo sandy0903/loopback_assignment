@@ -47,7 +47,7 @@ export class AppAssigmentApplication extends BootMixin(
     };
     this.bind(PasswordHasherBindings.PASSWORD_HASHER).toClass(BcryptHasher),
 this.bind(PasswordHasherBindings.ROUNDS).to(10)
-
+// this.bind()
     // mount authorization component
     const binding = this.component(AuthorizationComponent);
     // configure authorization component

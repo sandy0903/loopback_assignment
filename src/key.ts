@@ -24,3 +24,4 @@ export namespace UserServiceBindings {
     'services.user.service',
   );
 }
+// export const USER = BindingKey.create<UserProfile>('security.user');

@@ -1,5 +1,6 @@
 import {Entity, model, property, hasMany} from '@loopback/repository';
 import {Task} from './task.model';
+import {Projectuser} from './projectuser.model';
 
 @model()
 export class Project extends Entity {
@@ -40,6 +41,11 @@ export class Project extends Entity {
     type: 'string',
   })
   status: string;
+
+
+
+  @hasMany(() => Projectuser)
+  projectusers: Projectuser[];
 
   @hasMany(() => Task)
   tasks: Task[];

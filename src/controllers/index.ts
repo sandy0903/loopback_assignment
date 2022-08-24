@@ -14,3 +14,6 @@ export * from './usercredentials-user.controller';
 export * from './user-usercredentials.controller';
 // export * from './project-task.controller';
 // export * from './projectroject.controller';
+export * from './project-projectuser.controller';
+export * from './project-task.controller';
+export * from './user-task.controller';
