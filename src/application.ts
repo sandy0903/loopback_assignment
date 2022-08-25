@@ -2,7 +2,7 @@ import {AuthenticationComponent} from '@loopback/authentication';
 import {JWTAuthenticationComponent, SECURITY_SCHEME_SPEC, UserServiceBindings} from '@loopback/authentication-jwt';
 import {BootMixin} from '@loopback/boot';
 import {ApplicationConfig} from '@loopback/core';
-// import {CronComponent} from '@loopback/cron';
+import {CronComponent} from '@loopback/cron';
 import {RepositoryMixin} from '@loopback/repository';
 import {RestApplication} from '@loopback/rest';
 import {RestExplorerBindings, RestExplorerComponent} from '@loopback/rest-explorer';
@@ -10,6 +10,7 @@ import {registerAuthenticationStrategy} from '@loopback/authentication';
 import {ServiceMixin} from '@loopback/service-proxy';
 import 'dotenv/config';
 import path from 'path';
+import * as CronJobs from "./cronjobs"
 // import * as CronJobs from './cronjobs';
 import {MongdbDataSource} from './datasources';
 import {MySequence} from './sequence';
@@ -63,6 +64,7 @@ this.bind(PasswordHasherBindings.ROUNDS).to(10)
 
 
     this.component(RestExplorerComponent);
+    this.component(RestExplorerComponent);
     this.projectRoot = __dirname;
     // Customize @loopback/boot Booter Conventions here
     this.bootOptions = {
@@ -74,25 +76,25 @@ this.bind(PasswordHasherBindings.ROUNDS).to(10)
       },
     }
 
-    // Object.entries(CronJobs).forEach(([_key, value]) => {
-    //   const cronJob = value;
-    //   // this.add(cronJob);
-    // });
-    // this.addSecuritySpec();
-    // this.component(CronComponent);
+    Object.entries(CronJobs).forEach(([_key, value]) => {
+      const cronJob = value;
+      this.add(cronJob);
+    });
+    this.addSecuritySpec();
+    this.component(CronComponent);
   }
 
-  // addSecuritySpec(): void {
-  //   this.api({
-  //     openapi: '3.0.0',
-  //     info: {
-  //       title: 'TODO API',
-  //       version: '1.0.0',
-  //     },
-  //     paths: {},
-  //     components: {securitySchemes: SECURITY_SCHEME_SPEC},
-  //     security: [{jwt: []}],
-  //     servers: [{url: '/'}],
-  //   });
-  // }
+  addSecuritySpec(): void {
+    this.api({
+      openapi: '3.0.0',
+      info: {
+        title: 'TODO API',
+        version: '1.0.0',
+      },
+      paths: {},
+      components: {securitySchemes: SECURITY_SCHEME_SPEC},
+      security: [{jwt: []}],
+      servers: [{url: '/'}],
+    });
+  }
 }

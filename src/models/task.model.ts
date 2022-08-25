@@ -25,6 +25,7 @@ export class Task extends Entity {
   })
   assignedTo?: number;
 
+
   // @property({
   //   type: 'string',
   // })
@@ -34,7 +35,8 @@ export class Task extends Entity {
   //   type: 'string',
   // })
   // linkedTaskId: string;
-
+  @belongsTo(() => User)
+  userId: string;
   @property({
     type: 'string',
   })
@@ -67,9 +69,6 @@ export class Task extends Entity {
 
   @belongsTo(() => Project)
   projectId: string;
-
-  @belongsTo(() => User)
-  userId: string;
 
   @belongsTo(() => Task)
   linkTaskId: string;

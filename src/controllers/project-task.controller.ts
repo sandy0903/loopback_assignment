@@ -52,7 +52,7 @@ export class ProjectTaskController {
     @inject(SecurityBindings.USER) user: UserProfile,
     @param.path.string('id') projectId: string,
   ): Promise<Task[]> {
-    // console.log(user)
+
     const userId=user?.id;
     const projectUser=await this.projectUserRepository.findOne({
       where:{
@@ -60,29 +60,22 @@ export class ProjectTaskController {
         projectId
       }
     })
+    console.log(projectId, userId, projectUser)
     if(!projectUser){
       throw new HttpErrors.Unauthorized("Do not have access")
 
     }
-    // const tasks:Task[]=await this.taskRepository.find({
-    //   where:{
-    //     projectId,
-    //   },
-    //   include:[
-    //     {
-    //       relation:'user'
-    //     }
-    //   ]
-    // })
-    // const projectRole=projectUser.role;
-    // if(projectRole=='admin'){
-    //   return tasks
-    // }
-    return this.taskRepository.find({
+
+    const tasks:Task[]=await this.taskRepository.find({
       where:{
-        projectId
-      }
-    })
+        projectId,
+      }})
+      console.log(projectUser.role,tasks)
+    const projectRole=projectUser.role;
+    if(projectRole=='admin'){
+      return tasks
+    }
+    return tasks.filter(task=>task.createdBy=='user')
   }
 
   @post('/projects/{id}/tasks', {

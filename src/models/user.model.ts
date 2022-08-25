@@ -1,7 +1,6 @@
 import {Entity, model, property, hasMany, belongsTo, hasOne} from '@loopback/repository';
 import {Projectuser, ProjectuserWithRelations} from './projectuser.model';
 import {Project, ProjectWithRelations} from './project.model';
-import { RoleEnum } from '../enum/user';
 import {Usercredentials, UsercredentialsWithRelations} from './usercredentials.model';
 import {Task} from './task.model';
 
